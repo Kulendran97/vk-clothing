@@ -1,51 +1,60 @@
 import React from 'react'
 import { useState } from 'react';
 import {
+  auth,
     createAuthUserWithEmailAndPassword,
     createUserDocumentFromAuth,
+    siginAuthUserWithEmailAndPassword,
+    signInWithGooglePopup
   } from '../../utils/firebase/firebase.utils';
 import FormInput from '../form-input/form-input.component';
-import './sign-up-form.styles.scss';
+import './sign-in-form.styles.scss';
 import Button from '../button/button.component';
 
 const defaultFormFields = {
-    displayName: '',
     email: '',
-    password: '',
-    confirmPassword: '',
+    password: ''
   };
 
-export default function SignupForm() {
+export default function SignInForm() {
 
     const [formFields, setFormFields] = useState(defaultFormFields);
-    const { displayName, email, password, confirmPassword } = formFields;
+    const {  email, password } = formFields;
 
+    
+
+   
     const resetFormFields = () => {
         setFormFields(defaultFormFields);
+      };
+      
+      const signInWithGoogle = async () => {
+        await signInWithGooglePopup();
       };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        if(password !== confirmPassword){
-            alert("password not matched");
-            return;
-        }
+       
 
         try {
-            const { user } = await createAuthUserWithEmailAndPassword(
-              email,
-              password
-            );
-      
-            await createUserDocumentFromAuth(user, { displayName });
+
+          await siginAuthUserWithEmailAndPassword(email,password);
             resetFormFields();
           } catch (error) {
-            if (error.code === 'auth/email-already-in-use') {
-              alert('Cannot create user, email already in use');
-            } else {
-              console.log('user creation encountered an error', error);
+            switch(error.code){
+              case 'auth/wrong-password':
+                alert('incorrect password for email');
+                break;
+
+              case 'auth/user-not-found':
+                alert('no user associated with this email');
+                break;
+              default:
+                console.log(error);
+                
             }
+           
           }
     }
 
@@ -64,14 +73,7 @@ export default function SignupForm() {
    
     <form onSubmit={handleSubmit}>
      
-      <FormInput
-        label='Display Name'
-        type='text'
-        required
-        onChange={handleChange}
-        name='displayName'
-        value={displayName}
-      />
+     
      
       <FormInput
         label='Email'
@@ -91,16 +93,11 @@ export default function SignupForm() {
         value={password}
       />
      
-      <FormInput
-        label='Confirm Password'
-        type='password'
-        required
-        onChange={handleChange}
-        name='confirmPassword'
-        value={confirmPassword}
-      />
-      <Button  type='submit'>Sign Up</Button>
-    </form>
+     <div className='buttons-container'>
+      <Button  type='submit'>Sign In</Button>
+      <Button buttonType='google' type='button' onClick={signInWithGoogle} >Google signin</Button>
+      </div>
+      </form>
 </div>
   )
 }
